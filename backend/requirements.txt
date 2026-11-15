@@ -1,0 +1,17 @@
+# 运行时依赖
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.30,<1.0
+pydantic>=2.7,<3.0
+pydantic-settings>=2.3,<3.0
+python-dotenv>=1.0,<2.0
+
+# 媒体处理（阶段 2-2 起）：PyAV 解码/元数据，Pillow 图像，static-ffmpeg 提供 ffmpeg/ffprobe 二进制
+av>=13,<20
+numpy>=2.0,<3.0
+pillow>=10,<14
+static-ffmpeg>=3.0,<4.0
+
+# 测试依赖（本地验收用）
+pytest>=8.0,<9.0
+httpx>=0.27,<1.0
+python-multipart

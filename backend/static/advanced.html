@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Video · 素材导入与任务准备</title>
+<style>
+  :root { --bd:#e5e7eb; --fg:#111; --mut:#6b7280; --acc:#2563eb; --err:#dc2626; }
+  * { box-sizing:border-box; }
+  body { font:14px/1.6 -apple-system,"PingFang SC",sans-serif; margin:0; background:#f9fafb; color:var(--fg); }
+  header { background:#fff; border-bottom:1px solid var(--bd); padding:12px 20px; }
+  h1 { font-size:18px; margin:0; } h2 { font-size:15px; margin:0 0 8px; }
+  main { max-width:1100px; margin:16px auto; padding:0 16px; }
+  .card { background:#fff; border:1px solid var(--bd); border-radius:10px; padding:16px; margin-bottom:16px; }
+  .row { display:flex; gap:16px; flex-wrap:wrap; }
+  .col { flex:1 1 320px; }
+  label { display:block; font-weight:600; margin:8px 0 4px; }
+  input[type=text], input[type=number], textarea, select { width:100%; padding:8px; border:1px solid var(--bd); border-radius:6px; font:inherit; }
+  button { background:var(--acc); color:#fff; border:0; padding:8px 14px; border-radius:6px; cursor:pointer; font:inherit; }
+  button:disabled { background:#9ca3af; cursor:not-allowed; }
+  button.sec { background:#e5e7eb; color:#111; }
+  .filelist { max-height:200px; overflow:auto; border:1px solid var(--bd); border-radius:6px; padding:6px; }
+  .filelist label { font-weight:400; display:flex; gap:8px; align-items:center; padding:4px; border-radius:4px; }
+  .assets { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:12px; }
+  .asset { border:1px solid var(--bd); border-radius:8px; padding:8px; text-align:center; position:relative; }
+  .asset img { width:100%; height:104px; object-fit:cover; border-radius:6px; background:#eee; }
+  .asset .name { font-size:12px; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .asset .meta { color:var(--mut); font-size:12px; min-height:16px; }
+  .asset .rm { position:absolute; top:4px; right:4px; background:#ef4444; color:#fff; border:0; border-radius:50%; width:22px; height:22px; cursor:pointer; line-height:20px; }
+  .retry { color:var(--acc); cursor:pointer; font-size:12px; }
+  .muted { color:var(--mut); font-size:12px; }
+  .err { color:var(--err); font-size:13px; margin-top:4px; }
+  .ok { color:#16a34a; }
+  #taskdetail { font-family:ui-monospace,monospace; font-size:12px; white-space:pre-wrap; background:#f3f4f6; padding:10px; border-radius:6px; }
+  .hint { color:var(--mut); font-size:12px; }
+  header a { color:var(--acc); text-decoration:none; margin-left:12px; font-size:13px; }
+  .spinner { display:inline-block; width:14px; height:14px; border:2px solid #fff; border-top-color:transparent; border-radius:50%; animation:spin .8s linear infinite; vertical-align:-2px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+</style>
+<link rel="stylesheet" href="/maintenance.css">
+<script src="/maintenance.js"></script>
+</head>
+<body>
+<header><h1>AI Video · 素材导入与任务准备</h1><a href="/review.html">候选预览与审核 →</a><a href="/delivery.html">交付入口 →</a><span class="hint">创建任务不调用模型；底部可手动启动分析，真实模式会计费。</span><a href="/#/settings">返回产品设置</a></header>
+<main>
+
+  <section class="card">
+    <h2>1. 选择本次素材（勾选即选中，取消即移除）</h2>
+    <div class="hint">勾选 = 加入「本次素材」；取消勾选 = 移除。已登记过的文件会自动复用，不重复登记。也可以点「上传素材文件」从本机直接传（格式/真实类型/大小/安全文件名校验，存到 data/assets/）。</div>
+    <div class="action-row">
+      <input type="file" id="fileInput" multiple accept=".mov,.mp4,.avi,.mkv,.m4v,.webm,.jpg,.jpeg,.png,.webp,.bmp,.heic" style="display:none">
+      <button id="btnUpload" class="sec">上传素材文件</button> <span id="uploadMsg" class="hint"></span>
+    </div>
+    <div id="filelist" class="filelist"><span class="muted">加载中…</span></div>
+  </section>
+
+  <section class="card">
+    <h2>2. 本次已选素材（<span id="selCount">0</span> 个，创建任务将只提交这些）</h2>
+    <div class="hint">勾选后点「确认素材」加载缩略图与信息；移除（× 或取消勾选）保持两侧一致。</div>
+    <div class="action-row"><button id="btnConfirm" disabled>确认素材（登记并加载信息）</button> <span id="confirmMsg" class="hint"></span></div>
+    <div id="assets" class="assets" style="margin-top:10px"><span class="muted">尚未选择素材</span></div>
+  </section>
+
+  <section class="card">
+    <h2>3. 自然语言要求</h2>
+    <textarea id="requirement" rows="3" placeholder="例如：多保留正脸圆眼、眼神传神的片段，抬爪歪头动作加分，避免闭眼和严重遮挡"></textarea>
+  </section>
+
+  <section class="card">
+    <h2>4. 模型配置</h2>
+    <select id="cfgSelect"><option value="">加载中…</option></select>
+    <div id="cfgInfo" class="hint"></div>
+  </section>
+
+  <section class="card preference-card">
+    <h2>5. 审美偏好（读取并编辑实际偏好，保存为新版本）</h2>
+    <div class="row">
+      <div class="col">
+        <label>基础质量（不可放宽，逗号分隔）</label>
+        <input type="text" id="prefRequired" required value="基本可见,无严重模糊/遮挡,脸部完整">
+        <label>优先项（逗号分隔）</label>
+        <input type="text" id="prefPriority" value="圆眼,眼神传神,脸型表情好看">
+      </div>
+      <div class="col">
+        <label>加分项（逗号分隔）</label>
+        <input type="text" id="prefBonus" value="耳朵显小,短鼻,嘴套饱满,毛蓬松">
+        <label>动作加分（逗号分隔）</label>
+        <input type="text" id="prefAction" value="抬爪,歪头">
+      </div>
+    </div>
+    <div class="preference-export-row">
+      <label class="checkbox-label"><input type="checkbox" id="prefBestEnabled" checked> 生成最佳帧开头版本（同时保留连续原片）</label>
+      <label class="inline-field">最佳帧停留(ms) <input type="number" id="prefBestFrame" min="0" max="5000" step="1" value="300" style="width:120px;display:inline-block"></label>
+    </div>
+    <div class="action-row"><button class="sec" id="btnSavePref" disabled>保存偏好</button> <span id="prefMsg" class="hint"></span></div>
+  </section>
+
+  <section class="card">
+    <h2>6. 预算</h2>
+    <label for="budget">本轮任务预算上限（元）</label>
+    <input type="number" id="budget" value="1" min="0.01" step="0.01">
+  </section>
+
+  <section class="card">
+    <h2>7. 创建任务</h2>
+    <p id="createReadiness" class="hint">请先选择并确认素材。</p>
+    <div class="action-row"><button id="btnCreate" disabled>创建任务</button> <span id="createMsg" class="hint"></span></div>
+  </section>
+
+  <section class="card">
+    <h2>8. 任务详情与状态（刷新后可找回）</h2>
+    <div class="hint" id="taskHint">尚未创建任务</div>
+    <div id="taskdetail" class="muted">—</div>
+    <div class="action-row analysis-actions">
+      <label style="display:inline-block;margin-right:6px;font-weight:600">分析模式</label>
+      <select id="analyzeMode" style="width:auto;display:inline-block;margin-right:8px">
+        <option value="mock" selected>模拟（离线，source=mock）</option>
+        <option value="real">真实（真实模型调用，需密钥+预算）</option>
+      </select>
+      <button id="btnAnalyze">启动分析</button>
+      <a id="reviewLink" href="/review.html" style="display:none;color:var(--acc);margin-left:8px">进入审核与导出 →</a>
+    </div>
+    <div id="analyzeMsg" class="hint" style="margin-top:6px"></div>
+  </section>
+
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const api = async (url, opts) => {
+  const r = await fetch(url, opts);
+  const data = await r.json().catch(()=>({}));
+  if (!r.ok) { const e=new Error(data?.error?.message || data?.detail || ('HTTP '+r.status));e.status=r.status;throw e; }
+  return data;
+};
+const LS_SEL = 'aivideo_current_selection', LS_TASK = 'aivideo_last_task';
+// selection = [{path, name, asset_id?}]，是唯一选择状态；文件勾选与下方面板都由此派生
+let selection = JSON.parse(localStorage.getItem(LS_SEL)||'[]');
+let currentPref = null;
+let prefBaseline=null,prefReady=false,prefBusy=false,confirmBusy=false,createBusy=false;
+const prefFields=['prefRequired','prefPriority','prefBonus','prefAction','prefBestEnabled','prefBestFrame'];
+function preferenceValues(){
+  const csv=id=>$(id).value.split(/[,，]/).map(x=>x.trim()).filter(Boolean);
+  return {required:csv('prefRequired'),priority:csv('prefPriority'),bonus:csv('prefBonus'),action:csv('prefAction'),best:$('prefBestEnabled').checked,hold:Number($('prefBestFrame').value)};
+}
+function preferenceChanged(){return JSON.stringify(preferenceValues())!==prefBaseline;}
+function preferenceValid(){return preferenceValues().required.length>0&&(!$('prefBestEnabled').checked||($('prefBestFrame').value!==''&&$('prefBestFrame').checkValidity()));}
+function syncCreateControls(){
+  const ready=selection.length>0&&selection.every(s=>s.asset_id);
+  const validBudget=$('budget').value!==''&&$('budget').checkValidity()&&Number($('budget').value)>0;
+  const reason=!ready?'请先选择并确认全部素材。':!$('cfgSelect').value?'请先选择模型配置。':!validBudget?'请填写有效的任务预算。':!prefReady?'请等待偏好读取完成。':prefBusy?'偏好正在保存，请稍候。':preferenceChanged()?'偏好有修改，请先保存偏好。':'';
+  $('btnConfirm').disabled=confirmBusy||selection.length===0;
+  $('btnCreate').disabled=createBusy||!!reason;
+  $('createReadiness').textContent=reason||'素材和设置已就绪；创建任务不会启动分析。';
+}
+function syncPreferenceControls(){
+  const changed=preferenceChanged(),valid=preferenceValid();
+  $('prefBestFrame').disabled=prefBusy||!$('prefBestEnabled').checked;
+  $('btnSavePref').disabled=!prefReady||prefBusy||!changed||!valid;
+  $('btnSavePref').classList.toggle('sec',$('btnSavePref').disabled);
+  $('btnSavePref').textContent=prefBusy?'保存中…':'保存偏好';
+  if(!prefBusy&&prefReady)$('prefMsg').textContent=!valid?'请填写基础质量要求；停留时间须为0–5000毫秒的整数。':changed?'有未保存的修改':currentPref?'已保存偏好 '+(currentPref.display_name?currentPref.display_name+' · ':'')+'v'+currentPref.version:'尚未保存偏好';
+  syncCreateControls();
+}
+let createReqId = null, createFingerprint = null;  // 创建幂等：网络失败重试复用同请求ID
+
+function persistSel(){ localStorage.setItem(LS_SEL, JSON.stringify(selection)); }
+function selPaths(){ return new Set(selection.map(s=>s.path)); }
+
+function loadThumb(card, s) {
+  const img = card.querySelector('img');
+  const meta = card.querySelector('.meta');  // 现在唯一，且与文件名分开
+  if (!s.asset_id) { meta.textContent='尚未登记（请点确认素材）'; return; }
+  api(`/api/v1/assets/${s.asset_id}/meta`).then(m => {
+    meta.textContent = `${(m.duration_ms/1000).toFixed(1)}s · ${m.display_width}x${m.display_height} · 旋转${m.rotation}°`;
+  }).catch(() => { meta.innerHTML = '<span class="err">信息加载失败</span>'; });
+  api(`/api/v1/assets/${s.asset_id}/thumbnail`).then(t => {
+    if (t.data_url) img.src = t.data_url; else { img.alt='无缩略图'; img.style.opacity='0.5'; }
+  }).catch(() => { img.alt='缩略图失败'; img.style.opacity='0.5'; });
+}
+
+function renderSelection() {
+  const el = $('assets');
+  $('selCount').textContent = selection.length;
+  syncCreateControls();
+  // 同步文件勾选
+  const paths = selPaths();
+  document.querySelectorAll('.filechk').forEach(c => { c.checked = paths.has(c.dataset.path); });
+  if (!selection.length) { el.innerHTML = '<span class="muted">尚未选择素材</span>'; return; }
+  el.innerHTML = '';
+  for (const s of selection) {
+    const card = document.createElement('div'); card.className='asset';
+    const rm = document.createElement('button'); rm.className='rm'; rm.textContent='×'; rm.title='移除';
+    rm.onclick = () => { selection = selection.filter(x=>x.path!==s.path); persistSel(); renderSelection(); };
+    const img = document.createElement('img'); img.src='data:image/gif;base64,R0lGODlhAQABAAAAACw='; img.alt='加载中';
+    card.appendChild(rm); card.appendChild(img);
+    card.insertAdjacentHTML('beforeend', `<div class="name" title="${s.name}">${s.name}</div><div class="meta">加载信息…</div>`);
+    el.appendChild(card);
+    loadThumb(card, s);
+  }
+}
+
+async function loadFiles() {
+  const el = $('filelist');
+  try {
+    const d = await api('/api/v1/assets/files');
+    if (!d.files.length) { el.innerHTML = '<span class="muted">允许目录内暂无媒体文件（请放入 data/assets/）</span>'; return; }
+    el.innerHTML = d.files.map(f =>
+      `<label><input type="checkbox" class="filechk" data-path="${f.path}" data-name="${f.name}"> ${f.name} <span class="muted">(${(f.size_bytes/1048576).toFixed(1)}MB)</span></label>`
+    ).join('');
+    document.querySelectorAll('.filechk').forEach(c => {
+      c.checked = selPaths().has(c.dataset.path);
+      c.onchange = () => {
+        if (c.checked) {
+          if (!selection.find(x=>x.path===c.dataset.path)) selection.push({path:c.dataset.path, name:c.dataset.name});
+        } else {
+          selection = selection.filter(x=>x.path!==c.dataset.path);
+        }
+        persistSel(); renderSelection();
+      };
+    });
+  } catch(e) { el.innerHTML = `<span class="err">${e.message}</span>`; }
+}
+async function loadConfigs() {
+  try {
+    const d = await api('/api/v1/configs/all');
+    const sel = $('cfgSelect');
+    sel.innerHTML = d.configs.map(c =>
+      `<option value="${c.model_config_id}" data-version="${c.version}">${c.model_config_id} · ${c.vlm_model}（v${c.version}）</option>`
+    ).join('');
+    sel.onchange = () => { const o=sel.selectedOptions[0]; if(o) $('cfgInfo').textContent = `将随任务保存版本 v${o.dataset.version}`; syncCreateControls(); };
+    if (d.configs.length) sel.dispatchEvent(new Event('change'));
+  } catch(e) { $('cfgSelect').innerHTML = '<option value="">模型配置加载失败</option>'; }
+}
+async function loadPref() {
+  try {
+    currentPref = await api('/api/v1/preferences');
+    $('prefRequired').value = (currentPref.quality_floor.required||[]).join(',');
+    $('prefPriority').value = (currentPref.visual_rules.priority||[]).join(',');
+    $('prefBonus').value = (currentPref.visual_rules.bonus||[]).join(',');
+    $('prefAction').value = (currentPref.visual_rules.action_bonus||[]).join(',');
+    $('prefBestFrame').value = currentPref.export_defaults?.best_frame_hold_ms ?? 300;
+    $('prefBestEnabled').checked = currentPref.export_defaults?.best_frame_enabled ?? true;
+    prefBaseline=JSON.stringify(preferenceValues());prefReady=true;syncPreferenceControls();
+  } catch(e) {prefReady=e.status===404;if(prefReady)syncPreferenceControls();else $('prefMsg').textContent='偏好读取失败，请刷新后重试。';}
+}
+async function loadTask() {
+  const tid = new URLSearchParams(location.search).get('task') || localStorage.getItem(LS_TASK);
+  if (!tid) return;
+  try {
+    const t = await api('/api/v1/tasks/'+tid);
+    localStorage.setItem(LS_TASK, t.task_id);
+    $('taskHint').textContent = '已找回任务';
+    renderTask(t);
+    loadAnalysisStatus(tid);
+  } catch(e) { $('taskHint').textContent = '上次任务已不可读'; }
+}
+let currentTaskId = null;
+function renderTask(t) {
+  currentTaskId = t.task_id;
+  $('taskdetail').textContent = JSON.stringify({
+    task_id:t.task_id, status:t.status, outcome:t.outcome,
+    素材:t.asset_refs.map(a=>a.source_path.split('/').pop()),
+    预算:t.budget, 偏好:t.preference_ref, 模型:t.model_config_ref
+  }, null, 2);
+  const btn=$('btnAnalyze'), link=$('reviewLink');
+  if (t.status === 'ready_for_review' || t.status === 'completed') {
+    btn.style.display='none';
+    link.href='/review.html?task='+t.task_id;
+    link.style.display='inline';
+    $('analyzeMsg').innerHTML='<span class="ok">分析已完成，可进入审核导出</span>';
+  } else if (['analyzing', 'pending_reconciliation', 'cancelled'].includes(t.status)) {
+    btn.style.display='none'; link.style.display='none';
+  } else if (t.status === 'failed') {
+    btn.style.display='inline'; link.style.display='none';
+    loadAnalysisStatus(t.task_id);
+  } else {
+    btn.style.display='inline'; link.style.display='none';
+  }
+}
+$('btnAnalyze').onclick = async () => {
+  if (!currentTaskId) { $('analyzeMsg').innerHTML='<span class="err">请先创建任务</span>'; return; }
+  const mode = $('analyzeMode').value;
+  if(mode==='real'&&!confirm('即将对当前任务发起真实模型调用，会按用量计费。是否继续？'))return;
+  const btn=$('btnAnalyze'); btn.disabled=true; btn.textContent='启动中…';
+  try {
+    await api('/api/v1/tasks/'+currentTaskId+'/analyze', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({mode})});
+    const label = mode==='real' ? '真实' : '模拟（source=mock）';
+    $('analyzeMsg').innerHTML=`<span class="ok">分析已启动（${label}）</span>`;
+    pollAnalysis(currentTaskId);
+  } catch(e) { $('analyzeMsg').innerHTML=`<span class="err">${e.message}</span>`; }
+  finally { btn.disabled=false; btn.textContent='启动分析'; }
+};
+function pollAnalysis(tid) {
+  const timer = setInterval(async () => {
+    try {
+      const r = await api('/api/v1/tasks/'+tid+'/analysis');
+      const job = r.job;
+      if (!job) { clearInterval(timer); return; }
+      if (job.status === 'running') {
+        $('analyzeMsg').innerHTML = `<span class="ok">分析中：素材 ${job.asset_index}/${job.total_assets} · 阶段 ${job.stage||''}</span>`;
+      } else if (job.status === 'completed') {
+        clearInterval(timer);
+        const ml = (job.mode==='real') ? '真实' : '模拟（source=mock）';
+        $('analyzeMsg').innerHTML=`<span class="ok">✅ 分析完成（${ml}）</span>`;
+        $('btnAnalyze').style.display='none';
+        $('reviewLink').href='/review.html?task='+tid;
+        $('reviewLink').style.display='inline';
+        loadTask();
+      } else if (job.status === 'pending_reconciliation') {
+        clearInterval(timer); $('analyzeMsg').textContent='请求结果不确定，已暂停。请先核对供应商账单，核账前不能继续分析。已完成内容仍保留。'; $('btnAnalyze').style.display='none'; $('reviewLink').href='/review.html?task='+tid; $('reviewLink').style.display='inline';
+      } else if (job.status === 'cancelled') {
+        clearInterval(timer); $('analyzeMsg').textContent='分析已取消；已发请求仍保留费用记录，停止后续调用。'; $('btnAnalyze').style.display='none';
+      } else if (job.status === 'failed') {
+        clearInterval(timer);
+        $('analyzeMsg').innerHTML=`<span class="err">❌ 分析失败：${job.error||''}</span>`;
+        $('btnAnalyze').style.display='inline';
+      }
+    } catch(e) { clearInterval(timer); $('analyzeMsg').innerHTML=`<span class="err">${e.message}</span>`; }
+  }, 1000);
+}
+async function loadAnalysisStatus(tid) {
+  try {
+    const r = await api('/api/v1/tasks/'+tid+'/analysis');
+    const job = r.job;
+    if (!job) return;
+    if (job.status === 'running') { pollAnalysis(tid); }
+    else if (job.status === 'completed') { const ml=(job.mode==='real')?'真实':'模拟（source=mock）'; $('analyzeMsg').innerHTML=`<span class="ok">分析已完成（${ml}）</span>`; $('btnAnalyze').style.display='none'; $('reviewLink').href='/review.html?task='+tid; $('reviewLink').style.display='inline'; }
+    else if (job.status === 'pending_reconciliation') { $('analyzeMsg').textContent='真实请求待核账，禁止重发；已完成内容保留。'; $('btnAnalyze').style.display='none'; $('reviewLink').href='/review.html?task='+tid; $('reviewLink').style.display='inline'; }
+    else if (job.status === 'cancelled') { $('analyzeMsg').textContent='分析已取消；已完成成果与费用记录保留。'; $('btnAnalyze').style.display='none'; }
+    else if (job.status === 'failed') { $('analyzeMsg').innerHTML=`<span class="err">上次分析失败：${job.error||''}</span>`; }
+  } catch(e) { /* 无分析任务 */ }
+}
+
+$('btnConfirm').onclick = async () => {
+  if (!selection.length) { $('confirmMsg').textContent='请先勾选素材'; return; }
+  const btn=$('btnConfirm');confirmBusy=true; btn.disabled=true; btn.innerHTML='<span class="spinner"></span> 确认中';
+  $('confirmMsg').textContent='';
+  try {
+    // Register per selected file: canonical paths may differ for aliases or reused content.
+    for (const item of selection.filter(s=>!s.asset_id)) {
+      const d = await api('/api/v1/assets/register', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({paths:[item.path]})});
+      if(d.asset_refs.length!==1||!d.asset_refs[0].asset_id)throw Error('素材登记未完成，请重新确认');
+      item.asset_id=d.asset_refs[0].asset_id;persistSel();
+    }
+    persistSel(); renderSelection();
+    $('confirmMsg').innerHTML='<span class="ok">已确认（复用已登记，不重复登记）</span>';
+  } catch(e) {renderSelection();$('confirmMsg').textContent='确认未完成：'+e.message; }
+  finally {confirmBusy=false;syncCreateControls();btn.textContent='确认素材（登记并加载信息）'; }
+};
+$('btnSavePref').onclick = async () => {
+  if(!prefReady||prefBusy||!preferenceChanged()||!preferenceValid())return;
+  const values=preferenceValues();prefBusy=true;
+  prefFields.forEach(id=>$(id).disabled=true);syncPreferenceControls();
+  try {
+    const body={display_name:currentPref?.display_name||'',quality_floor:{...currentPref?.quality_floor,required:values.required},visual_rules:{...currentPref?.visual_rules,priority:values.priority,bonus:values.bonus,action_bonus:values.action},export_defaults:{...currentPref?.export_defaults,best_frame_hold_ms:Number.isInteger(values.hold)&&values.hold>=0&&values.hold<=5000?values.hold:(currentPref?.export_defaults?.best_frame_hold_ms??300),best_frame_enabled:values.best,prefer_continuous:true}};
+    currentPref=await api('/api/v1/preferences',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    $('prefBestFrame').value=currentPref.export_defaults.best_frame_hold_ms;prefBaseline=JSON.stringify(preferenceValues());prefBusy=false;prefFields.forEach(id=>$(id).disabled=false);syncPreferenceControls();
+  }catch(e){prefBusy=false;prefFields.forEach(id=>$(id).disabled=false);syncPreferenceControls();$('prefMsg').textContent='保存失败，修改已保留：'+e.message;}
+};
+$('btnCreate').onclick = async () => {
+  const ids = selection.map(s=>s.asset_id).filter(Boolean);
+  if (!ids.length) { $('createMsg').innerHTML='<span class="err">请先勾选并确认素材</span>'; return; }
+  const requirement=$('requirement').value.trim();
+  const budget=parseFloat($('budget').value);
+  if (!(budget>0)) { $('createMsg').innerHTML='<span class="err">预算必须大于 0</span>'; return; }
+  const cfgSel=$('cfgSelect').selectedOptions[0];
+  if (!cfgSel || !cfgSel.value) { $('createMsg').innerHTML='<span class="err">请选择模型配置</span>'; return; }
+  const btn=$('btnCreate');createBusy=true; btn.disabled=true; btn.innerHTML='<span class="spinner"></span> 创建中';
+  $('createMsg').textContent='';
+  // 幂等：同一逻辑创建请求复用 client_request_id；参数变化则换新 id
+  const fp = JSON.stringify({ids, requirement, budget, cfg:cfgSel.value, ver:cfgSel.dataset.version});
+  if (!createReqId || fp !== createFingerprint) {
+    createReqId = 'req-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+    createFingerprint = fp;
+  }
+  try {
+    const body={asset_ids:ids, client_request_id:createReqId, requirement:requirement||null, budget:{currency:'CNY',limit:Math.round(budget*1000000)}};
+    if (currentPref) body.preference_ref={preference_id:currentPref.preference_id, version:currentPref.version};
+    body.model_config_ref={model_config_id:cfgSel.value, version:parseInt(cfgSel.dataset.version)};
+    const t=await api('/api/v1/tasks', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+    createReqId = null; createFingerprint = null;
+    localStorage.setItem(LS_TASK, t.task_id);
+    history.replaceState(null, '', '/advanced.html?task='+encodeURIComponent(t.task_id));
+    selection=[]; persistSel(); renderSelection();  // 创建后清空，避免混入旧选择
+    $('createMsg').innerHTML='<span class="ok">创建成功</span>';
+    $('taskHint').textContent='任务已创建';
+    renderTask(t);
+  } catch(e) { $('createMsg').innerHTML=`<span class="err">${e.message}</span>`; }  // 失败保留 createReqId 供重试复用
+  finally {createBusy=false;syncCreateControls();btn.textContent='创建任务'; }
+};
+prefFields.forEach(id=>{ $(id).addEventListener('input',syncPreferenceControls);$(id).addEventListener('change',syncPreferenceControls); });
+$('budget').addEventListener('input',syncCreateControls);
+loadFiles().then(renderSelection); loadConfigs(); loadPref(); loadTask();
+// 便捷上传：本机文件 → 服务端校验并登记 → 刷新文件列表
+$('btnUpload').onclick = () => $('fileInput').click();
+$('fileInput').onchange = async () => {
+  const files = [...$('fileInput').files];
+  if (!files.length) return;
+  const msg = $('uploadMsg');
+  msg.textContent = '上传中…';
+  let ok = 0; const errs = [];
+  for (const f of files) {
+    const fd = new FormData();
+    fd.append('file', f);
+    try {
+      const r = await fetch('/api/v1/assets/upload', { method: 'POST', body: fd });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d?.error?.message || ('HTTP ' + r.status));
+      ok++;
+    } catch (e) { errs.push(`${f.name}: ${e.message}`); }
+  }
+  msg.innerHTML = `<span class="ok">上传完成 ${ok}/${files.length}</span>` + (errs.length ? ` <span class="err">${errs.join('；')}</span>` : '');
+  $('fileInput').value = '';
+  await loadFiles();
+};
+</script>
+</body>
+</html>

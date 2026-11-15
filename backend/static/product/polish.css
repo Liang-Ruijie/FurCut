@@ -1,0 +1,425 @@
+/* Opt-in refinement of the existing interface. No effect in original mode. */
+html.ui-polish { --radius:14px; --bg:#f7f8f4; --line:#e0e6de; font-size:15px; }
+.ui-polish .sidebar { width:208px; padding:30px 20px; background:#edf1e9; }
+.ui-polish .brand { font-size:27px; letter-spacing:1px; }
+.ui-polish .brand-note { margin:18px 0 28px; line-height:1.8; }
+.ui-polish nav a { padding:12px; gap:12px; font-size:14px; }
+.ui-polish .workspace { margin-left:208px; }
+.ui-polish .topbar { padding:0 32px; background:#fcfdf9; }
+.ui-polish main { padding:32px; max-width:1440px; }
+.ui-polish h1 { font-size:28px; font-weight:650; letter-spacing:-.4px; }
+.ui-polish h2 { font-size:19px; font-weight:600; }
+.ui-polish h3 { font-weight:550; }
+.ui-polish .card { padding:24px; border-radius:14px; box-shadow:0 2px 8px #233b2803; }
+.ui-polish .hero { padding:32px; gap:24px; background:#eaf0e4; }
+.ui-polish .hero .button { flex-shrink:0; }
+.ui-polish .hero p { font-size:14px; line-height:1.8; }
+.ui-polish .grid { grid-template-columns:repeat(auto-fill,minmax(248px,1fr)); gap:20px; }
+.ui-polish .task-card { border-radius:13px; transition:border-color .15s,box-shadow .15s; }
+.ui-polish .task-card:hover { transform:none; box-shadow:0 6px 20px #2136320a; }
+.ui-polish .task-images { height:185px; }
+.ui-polish .task-images img { object-position:center; }
+.ui-polish .task-text { padding:18px; }
+.ui-polish .task-text h3 { margin:10px 0 6px; font-size:17px; }
+.ui-polish .task-text>small { display:block; line-height:1.8; }
+.ui-polish .badge { font-size:11px; padding:3px 9px; line-height:1.6; }
+.ui-polish .field>span { font-weight:550; }
+.ui-polish input:not([type=range]):not([type=checkbox]),
+.ui-polish textarea,.ui-polish select { border-color:#cbd6cc; border-radius:9px; }
+.ui-polish textarea { line-height:1.8; min-height:112px; }
+.ui-polish .columns { grid-template-columns:minmax(0,1.2fr) minmax(340px,1fr); align-items:start; }
+.ui-polish .dropzone { padding:30px 16px; border-width:1px; margin:20px 0; }
+.ui-polish .dropzone strong { font-size:17px; font-weight:550; margin-bottom:5px; }
+.ui-polish .upload-item { padding:12px; gap:12px; flex-wrap:wrap; background:#fbfcf9; }
+.ui-polish .upload-thumb { width:58px; height:76px; object-fit:contain; }
+.ui-polish .upload-info { flex-basis:140px; }
+.ui-polish .upload-item button { font-size:12px; }
+.ui-polish .upload-info small { display:block; line-height:1.7; }
+.ui-polish .polish-options { border-top:1px solid var(--line); margin:20px 0; }
+.ui-polish .polish-options summary { color:var(--ink); font-size:14px; padding:2px 0 10px; }
+.ui-polish .polish-options[open] .check { margin:10px 0 16px; }
+.ui-polish .polish-options .field { margin-bottom:4px; }
+.ui-polish #create-task { width:100%; margin-top:8px; }
+.ui-polish .tabs { gap:8px; padding-bottom:12px; margin-top:24px; }
+.ui-polish .tabs button { white-space:nowrap; }
+.ui-polish .tabs button small { color:inherit; opacity:.8; }
+.ui-polish .toolbar { padding:12px 16px; border-radius:10px; background:#eef2ea; gap:14px; }
+.ui-polish .gallery { grid-template-columns:repeat(auto-fill,minmax(255px,1fr)); align-items:start; }
+.ui-polish .work { border-radius:13px; }
+.ui-polish .work-media { height:330px; background:#f0f2ed; }
+.ui-polish .work-media img { object-fit:contain; }
+.ui-polish .work-meta { padding:16px; }
+.ui-polish .work-meta .reason { min-height:0; margin:12px 0; line-height:1.8; }
+.ui-polish .work-meta>small { display:block; overflow-wrap:anywhere; }
+.ui-polish .work.reject { opacity:1; background:#f6f7f3; border-color:#d6dcd3; }
+.ui-polish .work.reject .work-media img { opacity:.65; }
+.ui-polish .work.reject .work-meta { color:#5a6660; }
+.ui-polish .work-actions { margin-top:14px; }
+.ui-polish .work-actions button { min-height:42px; }
+.ui-polish .comparison-choice { margin:14px 0 4px; }
+.ui-polish .costs { gap:24px; margin:12px 0; }
+.ui-polish .costs strong { font-size:18px; font-weight:600; }
+.ui-polish .notice { line-height:1.8; overflow-wrap:anywhere; }
+.ui-polish .stepper span { background:#e9eee4; }
+.ui-polish .stepper .current { background:var(--accent); color:#fff; }
+.ui-polish .sticky-actions { margin-top:24px; padding:18px 20px; box-shadow:none; }
+.ui-polish dialog { border-radius:16px; max-width:1060px; }
+.ui-polish .modal-head h2 { font-size:19px; }
+.ui-polish .modal-content { padding:24px; }
+.ui-polish .player { max-height:48dvh; }
+.ui-polish .range-row { gap:24px; }
+.ui-polish .range-row .row { gap:6px; }
+.ui-polish .range-row button { font-size:12px; }
+.ui-polish .download-row { padding:18px 0; }
+.ui-polish #toast { left:calc(50% + 104px); }
+@media(min-width:1600px) { .ui-polish .work-media { height:380px; } }
+@media(max-width:1100px) {
+ .ui-polish .sidebar { width:184px; padding:26px 16px; }
+ .ui-polish .workspace { margin-left:184px; }
+ .ui-polish main,.ui-polish .topbar { padding-left:24px; padding-right:24px; }
+ .ui-polish .columns { grid-template-columns:1fr; }
+ .ui-polish .hero { padding:24px; }
+ .ui-polish .hero .button { white-space:normal; }
+ .ui-polish .top-actions { gap:10px; }
+}
+@media(max-width:700px) {
+ .ui-polish .sidebar { position:static; width:100%; padding:16px; flex-wrap:wrap; }
+ .ui-polish .workspace { margin-left:0; }
+ .ui-polish nav { width:100%; justify-content:space-between; gap:4px; }
+ .ui-polish nav a { padding:9px; font-size:12px; flex:1; text-align:center; }
+ .ui-polish main { padding:24px 16px; }
+ .ui-polish .topbar { padding:10px 16px; height:auto; min-height:64px; flex-wrap:wrap; }
+ .ui-polish .top-actions { flex-wrap:wrap; gap:8px; }
+ .ui-polish .hero { padding:24px; }
+ .ui-polish h1 { font-size:25px; }
+ .ui-polish .hero .button { width:100%; margin-top:20px; }
+ .ui-polish .card { padding:20px; }
+ .ui-polish .grid { grid-template-columns:1fr; }
+ .ui-polish .task-images { height:200px; }
+ .ui-polish .gallery { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+ .ui-polish .work-media { height:225px; }
+ .ui-polish .work-meta { padding:12px; }
+ .ui-polish .work-meta .row.between { gap:6px; }
+ .ui-polish .work-actions button { min-width:46px; }
+ .ui-polish .toolbar { padding:12px; gap:10px; }
+ .ui-polish .sticky-actions .row { width:100%; }
+ .ui-polish .sticky-actions button { flex:1; }
+ .ui-polish #toast { left:50%; }
+ .ui-polish .modal-content { padding:16px; }
+ .ui-polish .range-row { grid-template-columns:1fr; gap:20px; }
+ .ui-polish .time-output { font-size:18px; }
+ .ui-polish .download-row .filename { flex-basis:100%; }
+}
+@media(max-width:390px) { .ui-polish .gallery { grid-template-columns:1fr; } .ui-polish .work-media { height:350px; } }
+
+/* One icon box and one label column: text edges never depend on glyph width. */
+.ui-polish .brand {font-weight:650;letter-spacing:0;font-size:28px}
+.ui-polish nav a {display:grid;grid-template-columns:20px minmax(0,1fr);gap:12px;align-items:center;text-align:left}
+.ui-polish .nav-icon {display:block;width:20px;height:20px;flex:none}
+.ui-polish nav a>span {line-height:1.5}
+@media(max-width:700px){
+ .ui-polish nav a {display:grid;grid-template-columns:18px minmax(0,1fr);gap:7px;padding:8px 5px;text-align:left}
+ .ui-polish .nav-icon {width:18px;height:18px}
+ .ui-polish nav a>span {font-size:12px;white-space:nowrap}
+}
+
+/* Shared Chinese page heading, aligned to the same main content grid. */
+.ui-polish .page-heading {margin:0 0 24px}
+.ui-polish .page-heading h1 {font-size:28px;font-weight:600;line-height:1.4;letter-spacing:-.4px;margin:0 0 10px}
+.ui-polish .page-heading p {margin:0;line-height:1.7}
+@media(max-width:700px){.ui-polish .page-heading h1{font-size:25px}.ui-polish .page-heading{margin-bottom:20px}}
+/* Shared control geometry; retain native select behavior and keyboard support. */
+.ui-polish {
+ --control-height:44px;
+ --control-inset:14px;
+ --control-radius:9px;
+ --control-gap:12px;
+}
+.ui-polish input:not([type=range]):not([type=checkbox]):not([type=radio]):not([type=file]),
+.ui-polish select {
+ height:var(--control-height);
+ min-height:var(--control-height);
+ padding:10px var(--control-inset);
+ line-height:22px;
+ border-radius:var(--control-radius);
+ min-width:0;
+ max-width:100%;
+}
+.ui-polish textarea {
+ padding:10px var(--control-inset);
+ border-radius:var(--control-radius);
+ min-width:0;
+ max-width:100%;
+}
+.ui-polish select:not([multiple]):not([size]) {
+ -webkit-appearance:none;
+ appearance:none;
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236a7973' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+ background-repeat:no-repeat;
+ background-size:16px 16px;
+ background-position:right var(--control-inset) center;
+ padding-right:44px;
+ text-overflow:ellipsis;
+}
+.ui-polish button,.ui-polish .button {
+ min-height:var(--control-height);
+ padding:10px 16px;
+ border-radius:var(--control-radius);
+}
+.ui-polish button.small,.ui-polish .button.small {
+ min-height:36px;
+ padding:7px 12px;
+}
+.ui-polish .field {margin-bottom:20px}
+.ui-polish .field>span {margin-bottom:8px}
+.ui-polish .form-actions,.ui-polish .work-actions {gap:8px}
+.ui-polish .toolbar {gap:var(--control-gap)}
+.ui-polish #pref-history {max-width:100%}
+@media(max-width:700px) {
+ .ui-polish #preference-form>.row {align-items:flex-start;gap:12px;margin-bottom:20px}
+ .ui-polish #pref-history {width:100%!important}
+ .ui-polish .toolbar select {max-width:100%}
+}
+@media(forced-colors:active) {
+ .ui-polish select:not([multiple]):not([size]) {appearance:auto;background-image:none;padding-right:14px}
+}
+
+/* A phone review needs enough room to inspect the face and operate decisions. */
+@media(max-width:600px){
+ .ui-polish .gallery{grid-template-columns:1fr}
+ .ui-polish .work-media{height:min(440px,65svh)}
+ .ui-polish .search{width:100%;min-width:0}
+ .ui-polish .search input{min-width:0;flex:1}
+}
+
+/* Settings actions appear only for unsaved edits; use the same button geometry. */
+.ui-polish .model-sampling {padding:8px 0 0;margin-top:4px}
+.ui-polish .model-sampling[open]>summary {margin-bottom:20px}
+.ui-polish .model-sampling>.field:last-child {margin-bottom:0}
+.ui-polish .model-actions {display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:24px}
+.ui-polish .model-actions button {min-width:100px}
+
+/* Administrative details stay available without crowding ordinary settings. */
+.ui-polish .maintenance>summary{font-size:15px;font-weight:550;color:var(--ink)}
+.ui-polish .maintenance-status{font-size:13px;font-weight:400;color:var(--muted)}
+.ui-polish .maintenance-body{margin-top:20px;padding-top:20px;border-top:1px solid var(--line)}
+.ui-polish .maintenance-body h3{margin:0 0 8px}
+.ui-polish .maintenance-tools{margin-top:16px}
+
+/* Preference editing follows the same save/cancel behavior as model settings. */
+.ui-polish #preference-form>.preference-header{align-items:center;gap:16px;margin-bottom:24px}
+.ui-polish .preference-header h2{margin:0;line-height:1.5}
+.ui-polish .preference-download-settings{display:flex;flex-direction:column;gap:14px;margin-top:20px}
+.ui-polish .preference-download-settings>.check,.ui-polish .preference-download-settings>.field{margin:0}
+.ui-polish .preference-download-settings input:disabled{background:#f0f2ed;color:var(--muted);cursor:not-allowed}
+.ui-polish .preference-download-settings[data-enabled=false] .field>span{color:var(--muted)}
+.ui-polish .preference-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px}
+.ui-polish .preference-actions button{min-width:100px}
+.ui-polish #preference-save-status{margin:16px 0 0}
+@media(max-width:700px){.ui-polish #preference-form>.preference-header{align-items:flex-start;gap:12px;margin-bottom:20px}}
+
+/* Shared alignment pass: keep the existing visual style and content. */
+.ui-polish .topbar,.ui-polish .network{padding-inline:max(32px,calc((100% - 1376px)/2))}
+.ui-polish .card>.row.between>h2{margin:0}
+.ui-polish .card>.row.between{row-gap:12px}
+.ui-polish .columns>.card{margin-bottom:0}
+.ui-polish label.check,.ui-polish .comparison-choice{align-items:center;line-height:1.6}
+.ui-polish input[type=checkbox]{margin:0;flex:none}
+.ui-polish .toolbar>.check{margin:0}
+.ui-polish .toolbar button{min-height:44px}
+.ui-polish .polish-options{padding:16px 0;margin:20px 0}
+.ui-polish .polish-options>summary{padding:0}
+.ui-polish .polish-options[open]>.check{margin:16px 0}
+.ui-polish .polish-options input:disabled{background:#f0f2ed;color:var(--muted);cursor:not-allowed}
+.ui-polish .polish-options .field:has(input:disabled)>span{color:var(--muted)}
+.ui-polish button:disabled{cursor:not-allowed}
+.ui-polish .gallery{align-items:stretch}
+.ui-polish .work{display:flex;flex-direction:column}
+.ui-polish .work-media{flex:none}
+.ui-polish .work-meta{display:flex;flex-direction:column;align-items:stretch;flex:1}
+.ui-polish .work-meta>.badge{align-self:flex-start}
+.ui-polish .work-meta>.reason{flex:none}
+.ui-polish .work-meta>.row{margin-top:8px}
+.ui-polish .work-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.ui-polish .work-actions:has(>button:last-child:nth-child(3)){grid-template-columns:repeat(3,minmax(0,1fr))}
+.ui-polish .work-actions button{padding:8px;min-width:0;white-space:nowrap;min-height:44px}
+.ui-polish .work-meta>button[data-act=original]{align-self:flex-start;margin-top:12px}
+.ui-polish .work-meta>details{margin-top:8px}
+.ui-polish .download-row>.button{white-space:nowrap}
+.ui-polish .library-item{display:flex;flex-direction:column;gap:10px;align-items:stretch}
+.ui-polish .library-item>img,.ui-polish .library-item>.unavailable-preview{grid-column:1/-1}
+.ui-polish .library-item input{margin:1px 0 0}
+.ui-polish .library-item small{overflow-wrap:anywhere;line-height:1.5}
+.ui-polish .modal-content>.field:last-child{margin-bottom:0}
+.ui-polish .modal-content>.hint:last-child{margin-bottom:0}
+.ui-polish .modal-head>button{flex-shrink:0}
+.ui-polish .timeline label{display:flex;align-items:baseline;gap:10px}
+@media(max-width:1100px){.ui-polish .topbar,.ui-polish .network{padding-inline:24px}}
+@media(max-width:700px){
+ .ui-polish .topbar,.ui-polish .network{padding-inline:16px}
+ .ui-polish .columns{gap:20px}
+ .ui-polish .card>.row.between{align-items:center}
+ .ui-polish .modal-foot{gap:12px}
+ .ui-polish .modal-foot>.row{width:100%}
+ .ui-polish .modal-foot>.row button{flex:1;white-space:nowrap}
+ .ui-polish #trim-status{min-width:0;flex-basis:100%}
+ .ui-polish .compare{grid-template-columns:minmax(0,1fr)}
+ .ui-polish .compare img{height:38dvh}
+ .ui-polish .compare button{width:100%}
+}
+.ui-polish .page-heading.row>div{min-width:0;flex:1 1 240px}
+.ui-polish .page-heading h1{overflow-wrap:anywhere}
+
+/* Two-step task confirmation stays in the existing right-hand card. */
+.ui-polish #estimate-usage{width:100%;margin-top:8px}
+.ui-polish .creation-actions{display:flex;gap:12px;margin-top:24px}
+.ui-polish .creation-actions button{flex:1}
+.ui-polish .creation-overview{display:flex;flex-wrap:wrap;gap:6px 14px;margin:12px 0 24px;font-size:12px;color:var(--muted)}
+.ui-polish .creation-budget{display:flex;gap:16px;justify-content:space-between;align-items:center;padding:16px 0;margin-top:20px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.ui-polish #task-confirmation .estimate-grid{margin:0;gap:24px}
+.ui-polish #task-confirmation .estimate-grid small{display:block;margin-bottom:8px}
+.ui-polish #task-confirmation .estimate-grid strong{font-size:20px;font-weight:600;overflow-wrap:anywhere}
+.ui-polish #task-confirmation>.hint{margin-bottom:0}
+@media(max-width:700px){.ui-polish #task-confirmation .estimate-grid{grid-template-columns:minmax(0,1fr);gap:20px}}
+.ui-polish .creation-actions #create-task{width:auto;margin-top:0}
+.ui-polish #confirmation-title:focus{outline:none}
+
+/* Panel titles share the same line as the material heading. */
+.ui-polish .creation-heading{display:flex;align-items:center;min-height:36px;margin-bottom:20px}
+.ui-polish .creation-heading h2{margin:0}
+.ui-polish #task-confirmation .estimate-grid small,.ui-polish .creation-budget>span{font-size:13px;font-weight:400;color:var(--muted)}
+.ui-polish .creation-budget>strong{font-size:15px;font-weight:600}
+.ui-polish .creation-basis,.ui-polish .creation-notes,.ui-polish .estimate-details{font-size:12px;font-weight:400;color:var(--muted);line-height:1.8}
+.ui-polish .creation-basis{margin:16px 0 0}
+.ui-polish .estimate-details{padding:8px 0 0}
+.ui-polish .estimate-details summary{font-size:12px;line-height:1.8}
+.ui-polish .estimate-details p{margin:8px 0 0}
+.ui-polish .creation-notes{margin-top:16px}
+.ui-polish .creation-notes p{margin:0 0 8px}
+.ui-polish .creation-notes p:last-child{margin-bottom:0}
+.ui-polish .creation-overview{margin-top:0}
+.ui-polish .preference-name input{max-width:360px}
+.ui-polish #pref-history{width:220px!important;text-overflow:ellipsis}
+.ui-polish #preference-form>.preference-header h2{min-width:0;overflow-wrap:anywhere;flex:1}
+@media(max-width:700px){.ui-polish #pref-history{width:100%!important}.ui-polish .preference-name input{max-width:none}}
+
+.ui-polish .preference-header-actions{gap:12px;flex-wrap:wrap}
+.ui-polish .preference-origin{margin:-8px 0 24px}
+@media(max-width:700px){.ui-polish .preference-header-actions{width:100%}.ui-polish .preference-header-actions #pref-history{flex:1;min-width:0}}
+
+/* Task heading: editing stays next to the title rather than across the page. */
+.ui-polish .task-title-row{display:flex;align-items:center;gap:10px;min-width:0;flex-wrap:wrap;margin-bottom:8px}
+.ui-polish .task-title-row h1{margin:0;min-width:0;max-width:calc(100% - 48px)}
+.ui-polish .task-title-row .task-title-name{font:inherit;letter-spacing:inherit;color:inherit;background:none;border:0;border-radius:4px;padding:0;min-height:0;text-align:left;white-space:normal;overflow-wrap:anywhere}
+.ui-polish .task-title-edit{padding:8px;min-width:36px;min-height:36px;border:0;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.ui-polish .task-title-edit svg{width:18px;height:18px}
+.ui-polish #task-title-input{width:min(440px,100%);min-width:0;flex:0 1 440px}
+.ui-polish .ready-budget{padding:16px 0;margin-bottom:12px;border-bottom:1px solid var(--line)}
+.ui-polish .ready-budget strong{margin-left:12px}
+.ui-polish .ready-actions{margin-top:24px;gap:12px}
+.ui-polish .ready-advanced{border-top:1px solid var(--line);margin-top:24px;padding-top:16px}
+.ui-polish .ready-advanced summary{color:var(--muted);font-weight:400}
+
+/* Matched actions and consistent breathing room below disclosure headings. */
+.ui-polish .ready-actions>button{min-height:44px;min-width:112px;padding:10px 20px;font-size:14px;line-height:22px;display:inline-flex;align-items:center;justify-content:center;margin:0}
+.ui-polish .ready-actions{align-items:center}
+.ui-polish .ready-advanced-content{padding-top:20px}
+.ui-polish .ready-advanced-content>.hint{margin:12px 0 0;line-height:1.7}
+.ui-polish details.task-options[open]>summary{margin-bottom:20px}
+.ui-polish details.task-options>p{margin:0 0 16px;line-height:1.8}
+.ui-polish details.task-options>small{display:block;margin-top:4px;line-height:1.7}
+
+/* Shared type hierarchy: field labels 13, supporting notes 12, key values 20. */
+.ui-polish .usage-estimate .estimate-grid{gap:24px;margin:0}
+.ui-polish .usage-estimate .estimate-grid small{display:block;margin-bottom:8px;font-size:13px;font-weight:400;color:var(--muted);line-height:1.7}
+.ui-polish .usage-estimate .estimate-grid strong{font-size:20px;font-weight:600;line-height:1.5;overflow-wrap:anywhere}
+.ui-polish .usage-estimate .estimate-status{font-size:13px;font-weight:400;line-height:1.8;margin:20px 0 0}
+.ui-polish .usage-estimate .estimate-notes{font-size:12px;font-weight:400;line-height:1.8;color:var(--muted);margin-top:16px}
+.ui-polish .usage-estimate .estimate-notes p{font:inherit;line-height:inherit;margin:0 0 8px}
+.ui-polish .usage-estimate .estimate-notes p:last-child{margin-bottom:0}
+.ui-polish .task-ready>.muted{font-size:13px;font-weight:400;line-height:1.8}
+.ui-polish .ready-budget>span{font-size:13px;font-weight:400;line-height:1.8}
+.ui-polish .ready-budget strong{font-size:15px;font-weight:600}
+.ui-polish .task-options>summary{font-size:14px;font-weight:500;line-height:1.8}
+.ui-polish .task-setting-list{margin:0;display:grid;gap:16px}
+.ui-polish .task-setting-list>div{display:grid;grid-template-columns:80px minmax(0,1fr);gap:12px;align-items:start;font-size:13px;line-height:1.8}
+.ui-polish .task-setting-list dt{font-size:inherit;font-weight:500}
+.ui-polish .task-setting-list dd{font-size:inherit;font-weight:400;margin:0;min-width:0;overflow-wrap:anywhere}
+.ui-polish .task-options>small{font-size:12px;font-weight:400;color:var(--muted);margin-top:20px;line-height:1.8}
+@media(max-width:700px){.ui-polish .usage-estimate .estimate-grid{grid-template-columns:minmax(0,1fr);gap:20px}.ui-polish .task-setting-list>div{grid-template-columns:70px minmax(0,1fr);gap:10px}}
+
+.ui-polish #task-settings-form{margin-top:0}
+.ui-polish #task-settings-form .field{margin-bottom:24px}
+.ui-polish #task-settings-form input[readonly],.ui-polish #task-settings-form textarea[readonly]{background:#f8faf7;color:var(--ink);cursor:default}
+.ui-polish #task-settings-form .task-output-options{margin:8px 0 24px}
+.ui-polish #task-settings-form .task-output-options .check{margin-bottom:16px}
+.ui-polish #task-settings-form .task-output-options input[name=hold]{max-width:220px}
+.ui-polish #task-settings-form>.hint{font-size:12px;line-height:1.8;margin:0 0 20px}
+.ui-polish #task-settings-form .row{gap:12px}
+
+/* Saved settings look like readable values; only edit mode exposes controls. */
+.ui-polish .task-settings-body{max-width:760px}
+.ui-polish #task-settings-form .field>label{font-size:13px;font-weight:500;line-height:1.7;margin-bottom:8px;display:block}
+.ui-polish .setting-read-value{border:1px solid var(--line);border-radius:9px;background:#f4f7f3;padding:12px 14px;min-height:44px;font-size:14px;font-weight:400;line-height:1.7;overflow-wrap:anywhere;white-space:pre-wrap}
+.ui-polish .setting-read-short,.ui-polish #task-pref{max-width:360px}
+.ui-polish .task-asset-list{display:grid;gap:12px}
+.ui-polish .task-asset-row{display:flex;gap:14px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:9px;background:#f8faf7;min-width:0}
+.ui-polish .task-asset-row>img{width:54px;height:72px;object-fit:contain;background:#edf1ec;border-radius:5px;flex:none}
+.ui-polish .task-asset-info{flex:1;min-width:0}
+.ui-polish .task-asset-info .filename{font-size:13px;overflow-wrap:anywhere}
+.ui-polish .task-asset-info small{display:block;font-size:12px;line-height:1.7;margin-top:4px}
+.ui-polish .task-asset-add{margin:16px 0 8px}
+.ui-polish #task-settings-form .task-output-options{margin:0 0 24px}
+.ui-polish #task-settings-form .task-output-options>span{display:block;margin-bottom:8px}
+.ui-polish #task-settings-form #task-hold-field{margin-bottom:0}
+@media(max-width:700px){.ui-polish .task-asset-row{flex-wrap:wrap}.ui-polish .task-asset-actions{margin-left:68px}.ui-polish .task-settings-body{max-width:100%}.ui-polish #task-pref{max-width:100%}}
+.ui-polish #task-settings-form .task-output-options>label.check{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:400;line-height:1.7}
+.ui-polish #task-settings-form .task-output-options>label.check input{flex:0 0 auto;margin:0}
+.ui-polish .ready-actions>button{min-width:132px}
+
+/* Review controls stay together; help explains alternatives without adding visual weight. */
+.ui-polish .review-toolbar{justify-content:flex-start;gap:16px;background:transparent;padding:0;border-radius:0}
+.ui-polish .review-visibility-group{display:flex;align-items:center;gap:8px}
+.ui-polish .review-visibility{margin:0;min-width:0;gap:8px}
+.ui-polish .review-visibility input{flex:none}
+.ui-polish .review-visibility-group .help-trigger{width:24px;height:24px;min-width:24px;min-height:24px;padding:0;line-height:1}
+.ui-polish .review-tools{display:flex;align-items:center;gap:12px;flex:0 1 auto;flex-wrap:wrap}
+.ui-polish .review-tools .compare-control>button,.ui-polish .review-tools>select{height:44px;min-height:44px;margin:0;padding-top:10px;padding-bottom:10px;font-size:14px;line-height:22px}
+.ui-polish .review-tools .compare-control>button{min-width:112px;white-space:nowrap}
+.ui-polish .progress-heading{justify-content:flex-start;align-items:center;gap:12px;margin-bottom:12px}
+.ui-polish .progress-heading h2{margin:0}
+@media(min-width:701px){
+ .ui-polish .sidebar>.brand,.ui-polish .sidebar>.brand-note,.ui-polish .sidebar>.sidebar-foot{margin-left:12px}
+}
+@media(max-width:700px){
+ .ui-polish .review-tools{width:100%;justify-content:flex-start}
+}
+
+/* Shared review rhythm: no expandable technical dump inside cards. */
+.ui-polish{--review-sidebar:208px;--review-gutter:32px;--review-max:1440px}
+.ui-polish .work-meta .work-labels{margin-top:0}
+.ui-polish .work-meta .reason{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;height:auto;max-height:3.2em;min-height:0;flex:none;line-height:1.6;margin:10px 0 8px}
+.ui-polish .work-meta>.filename{display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;height:18px;min-height:0;font-size:12px;line-height:18px;-webkit-line-clamp:1;margin:0}
+.ui-polish .work-meta button.text-action{min-height:28px;padding:0;font-size:13px;line-height:1.6;font-weight:400}
+.ui-polish .sticky-actions.review-bottom-bar{margin:0;padding:14px max(var(--review-gutter),calc((100vw - var(--review-sidebar) - var(--review-max))/2 + var(--review-gutter)));box-shadow:0 -4px 16px #21363206}
+.ui-polish .review-bottom-bar>button{min-height:44px;flex:none}
+@media(max-width:700px){.ui-polish{--review-sidebar:0px;--review-gutter:16px}.ui-polish .sticky-actions.review-bottom-bar{padding:12px var(--review-gutter)}.ui-polish .review-bottom-bar>button{flex:none}.ui-polish .work-meta .reason{min-height:0}}
+
+.ui-polish .work-detail-copy h3{margin-top:0}
+
+/* Related information stays together; shared controls retain one rhythm. */
+.ui-polish .gallery-pages{display:flex;justify-content:flex-end;align-items:center;gap:16px;margin:20px 0 0;padding:0}
+.ui-polish .gallery-pages button{min-height:40px;min-width:88px;margin:0}
+.ui-polish .processing-record .record-section-title{font-size:14px;font-weight:600;margin:20px 0 12px}
+.ui-polish .progress-summary>.processing-record{border:0;border-radius:0;box-shadow:none;margin:0;padding:20px 0 0}
+.ui-polish .progress-summary .progress-heading{display:none}
+.ui-polish .coverage-group{border-top:1px solid var(--line);margin-top:20px;padding-top:0}
+.ui-polish .asset-coverage{padding:12px 0;border-bottom:1px solid var(--line)}
+.ui-polish .asset-coverage:last-of-type{border-bottom:0}
+.ui-polish .asset-coverage .asset-status{justify-content:flex-start;align-items:center;border:0;padding:0;gap:12px}
+.ui-polish .asset-coverage p{margin:8px 0 0;font-size:13px;line-height:1.6}
+.ui-polish .coverage-note{margin:16px 0 0;font-size:13px;line-height:1.6}
+.compare>div{display:flex;flex-direction:column;min-width:0}
+.compare>div>p{line-height:1.7;margin:16px 0;flex:1}
+.compare>div>button{align-self:flex-start;min-height:44px}
+.comparison-note{border-top:1px solid var(--line);padding-top:18px;margin:24px 0 0;line-height:1.7}

@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Video · 候选结果预览与审核</title>
+<style>
+  :root{--bd:#e5e7eb;--fg:#111;--mut:#6b7280;--acc:#2563eb;--err:#dc2626;--ok:#16a34a;}
+  *{box-sizing:border-box;} body{font:14px/1.6 -apple-system,"PingFang SC",sans-serif;margin:0;background:#f9fafb;color:var(--fg);}
+  header{background:#fff;border-bottom:1px solid var(--bd);padding:12px 20px;display:flex;gap:12px;align-items:center;}
+  header a{color:var(--acc);text-decoration:none;} h1{font-size:18px;margin:0;} h2{font-size:15px;margin:0 0 8px;}
+  main{max-width:1100px;margin:16px auto;padding:0 16px;}
+  .card{background:#fff;border:1px solid var(--bd);border-radius:10px;padding:16px;margin-bottom:16px;}
+  label{display:block;font-weight:600;margin:8px 0 4px;}
+  input[type=text],input[type=number],select{width:100%;padding:8px;border:1px solid var(--bd);border-radius:6px;font:inherit;}
+  button{background:var(--acc);color:#fff;border:0;padding:8px 14px;border-radius:6px;cursor:pointer;font:inherit;}
+  button:disabled{background:#9ca3af;cursor:not-allowed;} button.sec{background:#e5e7eb;color:#111;}
+  button.rej{background:#fecaca;color:#7f1d1d;}
+  .cand{border:1px solid var(--bd);border-radius:8px;padding:10px;margin-bottom:10px;}
+  .cand.keep{background:#f0fdf4;border-color:#86efac;} .cand.reject{background:#fef2f2;border-color:#fca5a5;} .cand.trim{background:#fffbeb;border-color:#fcd34d;}
+  .cand.adjusted{border-color:#93c5fd;}
+  .cand img,.cand video{max-width:220px;max-height:180px;border-radius:6px;background:#eee;}
+  .meta{color:var(--mut);font-size:12px;} .err{color:var(--err);font-size:13px;} .ok{color:var(--ok);}
+  .muted{color:var(--mut);font-size:12px;}
+  .binput{width:90px;display:inline-block;padding:4px;}
+  .badge{display:inline-block;font-size:11px;padding:1px 6px;border-radius:999px;background:#eef2ff;color:#4338ca;margin-left:4px;}
+  .mbtn{margin:4px 4px 0 0;}
+</style>
+<link rel="stylesheet" href="/maintenance.css">
+<script src="/maintenance.js"></script>
+</head>
+<body>
+<header>
+  <h1>AI Video · 候选结果预览与审核</h1>
+  <a href="/advanced.html">← 返回任务准备</a><a href="/delivery.html">交付入口 →</a><a href="/#/settings">返回产品设置</a>
+  <span class="muted">读取真实分析结果；本页不发起模型调用</span>
+</header>
+<main>
+
+  <section class="card">
+    <h2>选择任务</h2>
+    <select id="taskSelect"><option value="">加载中…</option></select>
+    <div class="action-row review-actions"><button id="btnLoad" class="mbtn">加载结果</button>
+    <button id="btnBatchExport" class="mbtn" disabled>批量导出保留项</button>
+    <button id="btnManifest" class="sec mbtn" disabled>导出保留项来源清单</button>
+    </div><span id="loadMsg" class="muted"></span>
+  </section>
+
+  <section class="card">
+    <h2>候选结果（<span id="candCount">0</span>）</h2>
+    <div class="muted">模型原始判定与用户修改分别保留（绿=保留，红=淘汰，蓝框=边界已调整）。中间分析结果均标明来源。</div>
+    <div id="cands"><span class="muted">请先选择任务并加载结果</span></div>
+  </section>
+
+  <section class="card">
+    <h2>导出</h2>
+    <div class="muted">「批量导出保留项」导出照片+视频+来源清单，支持部分失败与中断恢复（已完成项不重复导出）。</div>
+    <div id="batchProgress" class="muted"></div>
+    <div id="exportLog" class="muted"></div>
+  </section>
+
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const api=async(url,opts)=>{const r=await fetch(url,{cache:'no-store',...(opts||{})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d?.error?.message||d?.detail||('HTTP '+r.status));return d;};
+let currentTask=null, candidates=[], hiddenVideos=[], hiddenPhotos=[], decisionByCand={}, boundaryByCand={};
+
+async function loadTasks(){
+  const d=await api('/api/v1/tasks');
+  $('taskSelect').innerHTML=d.tasks.map(t=>`<option value="${t.task_id}">${t.task_id.slice(0,18)} · ${Maintenance.status(t.status)} · ${Maintenance.date(t.created_at)}</option>`).join('');
+}
+async function loadFeedback(tid){
+  const d=await api(`/api/v1/tasks/${tid}/feedback`);
+  const dec={}, bnd={};
+  for(const f of d.feedback){
+    const cid=f.candidate_id||f.payload?.candidate_id||`${f.asset_id}:${f.t_ms??f.start_ms??''}`;
+    const map=(f.kind==='boundary_adjust')?bnd:dec;
+    const prev=map[cid];
+    // 按最新反馈覆盖（created_at 升序）；审核决定与边界各自独立
+    if(!prev || (f.created_at||'') >= (prev.created_at||'')) map[cid]=f;
+  }
+  decisionByCand=dec; boundaryByCand=bnd;
+}
+async function loadResults(){
+  const tid=$('taskSelect').value; if(!tid) return;
+  $('loadMsg').textContent='加载中…';
+  try{
+    const res=await api(`/api/v1/tasks/${tid}/results`);
+    currentTask=tid;
+    const option=$('taskSelect').selectedOptions[0];
+    if(option){ const parts=option.textContent.split(' · '); parts[1]=Maintenance.status(res.status); option.textContent=parts.join(' · '); }
+    await loadFeedback(tid);
+    candidates=[];
+    hiddenVideos=[];
+    hiddenPhotos=[];
+    // 照片：精选推荐（去重后）为主，其余基本可用折叠
+    const recIds = new Set((res.recommended_photos||[]).map(p=>p.candidate_id));
+    for(const p of res.photos||[]) {
+      const c={kind:'photo',candidate_id:p.candidate_id,asset_id:p.asset_id,run_id:p.run_id,from:p.from,source_type:p.source_type,t_ms:p.t_ms,source_pts:p.source_pts,time_base:p.time_base,promo_worthy:p.promo_worthy,manual_decision:p.manual_decision,manual_reason:p.manual_reason};
+      if(recIds.has(p.candidate_id)) candidates.push(c); else hiddenPhotos.push(c);
+    }
+    // 视频：自然连续段为主；重叠片段（定位用）放入折叠区，保留原身份
+    for(const s of res.video_segments||[]) candidates.push({kind:'video',candidate_id:s.candidate_id,asset_id:s.asset_id,run_id:s.run_id,from:s.from,source_type:s.source_type,start_ms:s.start_ms,end_ms:s.end_ms,reason:s.reason,model_start_ms:s.start_ms,model_end_ms:s.end_ms,boundary_note:s.boundary_note,analysis_version:s.analysis_version,source_runs:s.source_runs,manual_decision:s.manual_decision,manual_reason:s.manual_reason});
+    hiddenVideos = (res.video_fragments||[]).map(s=>({kind:'video',candidate_id:s.candidate_id,asset_id:s.asset_id,run_id:s.run_id,from:s.from,source_type:s.source_type,start_ms:s.start_ms,end_ms:s.end_ms,reason:s.reason,model_start_ms:s.start_ms,model_end_ms:s.end_ms,cluster_id:s.cluster_id,is_representative:s.is_representative}));
+    // 人工审核决定预加载（历史 review_version 冻结，仅作用于当前候选；自动选片成绩不受影响）
+    // 不覆盖用户后来保存的反馈决定（feedback > 冻结人工评价）
+    if(res.manual_review_version){
+      for(const c of candidates){
+        if(decisionByCand[c.candidate_id]) continue;  // 用户已保存决定优先
+        if(c.manual_decision==='reject'){ decisionByCand[c.candidate_id]={kind:'reject',reason:c.manual_reason}; }
+        else if(c.manual_decision==='keep'){ decisionByCand[c.candidate_id]={kind:'keep',reason:c.manual_reason}; }
+        else if(c.manual_decision==='trim'){ decisionByCand[c.candidate_id]={kind:'trim',reason:c.manual_reason}; }
+      }
+    }
+    if(!res.has_results){ $('cands').innerHTML='<span class="err">该任务暂无分析结果（未运行分析或尚未完成），不伪造候选。</span>'; $('candCount').textContent='0'; }
+    else renderCands();
+    const pend=(res.manual_verdicts_pending||[]).length;
+    const applied=(res.manual_verdicts_applied||[]).length;
+    $('loadMsg').innerHTML='<span class="ok">已加载</span>'+(res.manual_review_version?(' · 人工决定已应用 '+applied+' 条、待关联 '+pend+' 条'):'')+(pend?(' <span style="color:#d97706">（待关联：历史评价批次与当前候选批次不符，需重新核对）</span>'):'');
+    $('btnBatchExport').disabled=false;$('btnManifest').disabled=false;
+    restoreBatch();
+  }catch(e){ $('cands').innerHTML=`<span class="err">${e.message}</span>`; }
+}
+function decOf(c){ return decisionByCand[c.candidate_id]; }
+function bndOf(c){ return boundaryByCand[c.candidate_id]; }
+function renderCands(){
+  const el=$('cands'); el.innerHTML='';
+  for(const c of candidates){
+    const dec=decOf(c), bnd=bndOf(c);
+    // 应用用户保存的边界（覆盖模型原始边界）；原模型边界保留在 model_start_ms/model_end_ms
+    if(bnd && bnd.start_ms!==undefined){
+      c.start_ms=bnd.start_ms; c.end_ms=bnd.end_ms;
+    }
+    const div=document.createElement('div'); div.className='cand'; div.dataset.cid=c.candidate_id;
+    if(dec){
+      if(dec.kind==='keep') div.classList.add('keep');
+      else if(dec.kind==='reject') div.classList.add('reject');
+      else if(dec.kind==='trim') div.classList.add('trim');
+    }
+    if(bnd) div.classList.add('adjusted');
+    div.appendChild(metaLine(c, dec, bnd));
+    if(c.kind==='photo'){ buildPhoto(div,c); }
+    else { buildVideo(div,c); }
+    el.appendChild(div);
+  }
+  $('candCount').textContent=candidates.length;
+  // 重叠候选（非代表）：默认折叠，展开查看；保留原候选身份与审核反馈
+  if(hiddenVideos.length){
+    const det=document.createElement('details'); det.style.marginTop='10px';
+    const sum=document.createElement('summary'); sum.textContent=`重叠候选（非代表）${hiddenVideos.length} 段 · 点击展开`;
+    sum.style.cssText='cursor:pointer;color:#2563eb;font-weight:600';
+    det.appendChild(sum);
+    const wrap=document.createElement('div'); wrap.style.marginTop='8px';
+    for(const c of hiddenVideos){
+      const dec=decOf(c), bnd=bndOf(c);
+      if(bnd && bnd.start_ms!==undefined){ c.start_ms=bnd.start_ms; c.end_ms=bnd.end_ms; }
+      const div=document.createElement('div'); div.className='cand'; div.dataset.cid=c.candidate_id;
+      if(dec){ if(dec.kind==='keep') div.classList.add('keep'); else if(dec.kind==='reject') div.classList.add('reject'); else if(dec.kind==='trim') div.classList.add('trim'); }
+      if(bnd) div.classList.add('adjusted');
+      div.appendChild(metaLine(c, dec, bnd));
+      buildVideo(div,c);
+      wrap.appendChild(div);
+    }
+    det.appendChild(wrap);
+    el.appendChild(det);
+  }
+  // 基本可用照片（未精选）：默认折叠
+  if(hiddenPhotos.length){
+    const det=document.createElement('details'); det.style.marginTop='10px';
+    const sum=document.createElement('summary'); sum.textContent=`基本可用照片（未精选）${hiddenPhotos.length} 张 · 点击展开`;
+    sum.style.cssText='cursor:pointer;color:#2563eb;font-weight:600';
+    det.appendChild(sum);
+    const wrap=document.createElement('div'); wrap.style.marginTop='8px';
+    for(const c of hiddenPhotos){
+      const dec=decOf(c), bnd=bndOf(c);
+      const div=document.createElement('div'); div.className='cand'; div.dataset.cid=c.candidate_id;
+      if(dec){ if(dec.kind==='keep') div.classList.add('keep'); else if(dec.kind==='reject') div.classList.add('reject'); else if(dec.kind==='trim') div.classList.add('trim'); }
+      div.appendChild(metaLine(c, dec, bnd));
+      buildPhoto(div,c);
+      wrap.appendChild(div);
+    }
+    det.appendChild(wrap);
+    el.appendChild(det);
+  }
+}
+function metaLine(c, dec, bnd){
+  const d=document.createElement('div'); d.className='meta';
+  let s = c.kind==='photo'
+    ? `照片 · ${(c.t_ms/1000).toFixed(2)}s · ${c.promo_worthy===true?'精选推荐':(c.promo_worthy===false?'基本可用':'未标层')}`
+    : `视频片段 · ${(c.start_ms/1000).toFixed(2)}–${(c.end_ms/1000).toFixed(2)}s · ${c.reason||''}${c.boundary_note?' · 边界待确认':''}${c.analysis_version?' · '+c.analysis_version:''}`;
+  s += ` · 来源=${c.source_type}/${c.from} ${(c.asset_id||'').slice(0,8)}`;
+  const tags=[];
+  if(dec) tags.push({keep:'已保留',reject:'已淘汰',trim:'待修剪（需调边界确认）'}[dec.kind]||dec.kind);
+  if(bnd) tags.push('已调整边界');
+  if(tags.length) s += ' · '+tags.join('，');
+  d.textContent=s;
+  return d;
+}
+function buildPhoto(div,c){
+  const img=document.createElement('img'); img.alt='候选帧';
+  div.appendChild(img);
+  const row=document.createElement('div');
+  row.appendChild(actionBtns(c));
+  const expP=document.createElement('button'); expP.textContent='导出照片'; expP.style.marginLeft='6px';
+  expP.onclick=()=>exportPhoto(c);
+  row.appendChild(expP);
+  div.appendChild(row);
+  // 缓存已加载的帧，避免重渲染重复解码；未加载的等滚动到可见再加载（不拖垮后端）
+  if(c._frameUrl){ img.src=c._frameUrl; }
+  else { div._cand=c; frameIO.observe(div); }
+}
+const frameIO=new IntersectionObserver((entries)=>{
+  for(const en of entries){
+    if(en.isIntersecting){
+      const div=en.target, c=div._cand, img=div.querySelector('img');
+      frameIO.unobserve(div);
+      if(!c || !img) continue;
+      api(`/api/v1/assets/${c.asset_id}/frame?t_ms=${c.t_ms}`)
+        .then(t=>{ if(t.data_url){ img.src=t.data_url; c._frameUrl=t.data_url; } else img.alt='无帧'; })
+        .catch(()=>img.alt='帧加载失败');
+    }
+  }
+},{rootMargin:'300px'});
+function buildVideo(div,c){
+  const orig=document.createElement('div'); orig.className='meta'; orig.textContent=`模型边界：${(c.model_start_ms/1000).toFixed(2)}–${(c.model_end_ms/1000).toFixed(2)}s`;
+  div.appendChild(orig);
+  const vrow=document.createElement('div');
+  const start=document.createElement('input'); start.type='number'; start.className='binput'; start.value=c.start_ms; start.min=0; start.dataset.role='start';
+  const end=document.createElement('input'); end.type='number'; end.className='binput'; end.value=c.end_ms; end.dataset.role='end';
+  vrow.append('开始ms ',start,' 结束ms ',end);
+  const saveB=document.createElement('button'); saveB.className='sec'; saveB.textContent='保存边界'; saveB.style.marginLeft='6px';
+  const prevB=document.createElement('button'); prevB.className='sec'; prevB.textContent='预览';
+  const expB=document.createElement('button'); expB.textContent='导出';
+  prevB.onclick=()=>preview(c,start,end,div);
+  expB.onclick=()=>exportVideo(c,start,end);
+  saveB.onclick=()=>{
+    const s=parseInt(start.value), e=parseInt(end.value);
+    saveFb(c,'boundary_adjust',{start_ms:s,end_ms:e});
+  };
+  vrow.append(saveB,prevB,expB);
+  div.appendChild(vrow);
+  div.appendChild(actionBtns(c));
+}
+function actionBtns(c){
+  const wrap=document.createElement('div');
+  const keep=document.createElement('button'); keep.textContent='保留'; keep.className='sec mbtn';
+  keep.onclick=()=>{ saveFb(c,'keep',{}); };
+  const rej=document.createElement('button'); rej.textContent='淘汰'; rej.className='rej mbtn';
+  rej.onclick=()=>{ saveFb(c,'reject',{}); };
+  if(c.kind==='video'){
+    const trim=document.createElement('button'); trim.textContent='待修剪'; trim.className='sec mbtn';
+    trim.onclick=()=>{ saveFb(c,'trim',{}); };
+    wrap.append(trim);
+  }
+  wrap.append(keep,rej);
+  return wrap;
+}
+function exportPhoto(c){
+  $('exportLog').textContent='导出照片中…';
+  api('/api/v1/export/photo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task_id:currentTask,candidate_id:c.candidate_id,asset_id:c.asset_id,t_ms:c.t_ms,source_pts:c.source_pts,time_base:c.time_base})})
+    .then(r=>{ $('exportLog').innerHTML=`<span class="ok">已导出：${r.file}</span> <a href="/api/v1/export/file/${r.file}" target="_blank">下载照片</a>`+(r.variant_files||[]).map(v=>` <a href="/api/v1/export/file/${v.file}" target="_blank">最佳帧开头版</a>`).join(''); })
+    .catch(e=>{ $('exportLog').innerHTML=`<span class="err">照片导出失败：${e.message}</span>`; });
+}
+function applyFeedback(c,kind,extra){
+  // 同步更新本地状态并渲染；审核决定与边界调整分别存、分别恢复（互不覆盖）
+  const rec={kind,candidate_id:c.candidate_id,asset_id:c.asset_id,run_id:c.run_id,
+             source_type:c.source_type,from:c.from,created_at:new Date().toISOString()};
+  if(c.t_ms!==undefined) rec.t_ms=c.t_ms;
+  if(extra && extra.start_ms!==undefined){ rec.start_ms=extra.start_ms; rec.end_ms=extra.end_ms; c.start_ms=extra.start_ms; c.end_ms=extra.end_ms; }
+  if(kind==='boundary_adjust') boundaryByCand[c.candidate_id]=rec;
+  else decisionByCand[c.candidate_id]=rec;
+  renderCands();
+}
+let savingFeedback=false;
+async function saveFb(c,kind,extra){
+  if(savingFeedback) return;
+  savingFeedback=true;
+  const saveTask=currentTask;
+  const payload={candidate_id:c.candidate_id,asset_id:c.asset_id,run_id:c.run_id,kind,
+                 source_type:c.source_type,from:c.from};
+  if(c.t_ms!==undefined) payload.t_ms=c.t_ms;
+  if(extra && extra.start_ms!==undefined){ payload.start_ms=extra.start_ms; payload.end_ms=extra.end_ms; }
+  try{
+    await api(`/api/v1/tasks/${currentTask}/feedback`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({asset_id:c.asset_id,run_id:c.run_id,kind,payload})});
+    if(currentTask!==saveTask) return;
+    applyFeedback(c,kind,extra);
+    await loadFeedback(currentTask); renderCands();
+  }catch(e){ renderCands(); $('exportLog').textContent=`反馈保存失败：${e.message}`; }
+  finally{ savingFeedback=false; }
+}
+function preview(c,start,end,div){
+  let v=div.querySelector('video');
+  if(!v){ v=document.createElement('video'); v.controls=true; div.appendChild(v); }
+  api('/api/v1/preview/video',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task_id:currentTask,candidate_id:c.candidate_id,asset_id:c.asset_id,start_ms:parseInt(start.value),end_ms:parseInt(end.value)})})
+    .then(r=>{ v.src=r.url; v.play?.(); })
+    .catch(e=>{ $('exportLog').innerHTML=`<span class="err">预览失败：${e.message}</span>`; });
+}
+function exportVideo(c,start,end){
+  $('exportLog').textContent='导出中…';
+  api('/api/v1/export/video',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task_id:currentTask,candidate_id:c.candidate_id,asset_id:c.asset_id,start_ms:parseInt(start.value),end_ms:parseInt(end.value)})})
+    .then(r=>{ $('exportLog').innerHTML=`<span class="ok">已导出：${r.file}</span> <a href="/api/v1/export/file/${r.file}" target="_blank">连续版下载</a>`+(r.variant_files||[]).map(v=>` <a href="/api/v1/export/file/${v.file}" target="_blank">最佳帧开头版</a>`).join(''); })
+    .catch(e=>{ $('exportLog').innerHTML=`<span class="err">导出失败：${e.message}</span>`; });
+}
+function keptItems(){
+  const all=[...candidates, ...hiddenVideos, ...hiddenPhotos];
+  return all.filter(c=>decOf(c)?.kind==='keep').map(c=>{
+    const bnd=bndOf(c);
+    return {kind:c.kind, asset_id:c.asset_id, source_type:c.source_type, from:c.from, run_id:c.run_id,
+      t_ms:c.t_ms, start_ms:(bnd&&bnd.start_ms!==undefined)?bnd.start_ms:c.start_ms,
+      end_ms:(bnd&&bnd.end_ms!==undefined)?bnd.end_ms:c.end_ms,
+      reason:c.reason, promo_worthy:c.promo_worthy, candidate_id:c.candidate_id,
+      boundary_note:c.boundary_note, analysis_version:c.analysis_version, source_runs:c.source_runs};
+  });
+}
+let batchTimer=null;
+function renderBatchProgress(st){
+  const pct = st.total_items ? Math.round(st.done_items/st.total_items*100) : 0;
+  let html='';
+  if(st.status==='running') html=`⏳ 批量导出中… ${st.done_items}/${st.total_items}（失败 ${st.failed_items}）`;
+  else if(st.status==='completed') html=`<span class="ok">✅ 全部导出完成（${st.done_items} 项，${pct}%）</span>`;
+  else if(st.status==='partial') html=`<span class="err">⚠️ 部分失败：完成 ${st.done_items}，失败 ${st.failed_items}</span>`;
+  else if(st.status==='failed') html=`<span class="err">❌ 全部失败（${st.failed_items} 项）</span>`;
+  else html=`状态：${st.status}`;
+  if(st.manifest_file) html+=` <a href="/api/v1/export/file/${st.manifest_file}" target="_blank">来源清单</a>`;
+  const failed=(st.items||[]).filter(i=>i.status==='failed');
+  if(failed.length){ html+='<div class="muted">失败：'+failed.map(i=>`${i.source} ${i.kind==='photo'?((i.t_ms||0)/1000).toFixed(2)+'s':((i.start_ms||0)/1000).toFixed(2)+'-'+((i.end_ms||0)/1000).toFixed(2)+'s'}（${i.error}）`).join('；')+'</div>'; }
+  const done=(st.items||[]).filter(i=>i.status==='done');
+  if(done.length && st.status!=='running'){ html+='<div class="muted">已导出：'+done.map(i=>`<a href="/api/v1/export/file/${i.file_name}" target="_blank">${i.file_name}</a>`+(i.variant_files||[]).map(v=>` <a href="/api/v1/export/file/${v.file}" target="_blank">最佳帧开头版</a>`).join('')).join('、')+'</div>'; }
+  $('batchProgress').innerHTML=html;
+}
+function pollBatch(jid){
+  if(batchTimer) clearInterval(batchTimer);
+  batchTimer=setInterval(async()=>{
+    try{
+      const st=await api(`/api/v1/export/jobs/${jid}`);
+      renderBatchProgress(st);
+      if(st.status!=='running'){ clearInterval(batchTimer); batchTimer=null; }
+    }catch(e){ clearInterval(batchTimer); batchTimer=null; $('batchProgress').innerHTML=`<span class="err">查询导出任务失败：${e.message}</span>`; }
+  },1000);
+}
+async function restoreBatch(){
+  if(!currentTask) return;
+  try{
+    const r=await api(`/api/v1/export/jobs/task/${currentTask}`);
+    if(r.job){ renderBatchProgress(r.job); if(r.job.status==='running') pollBatch(r.job.export_job_id); }
+  }catch(e){ /* 无任务忽略 */ }
+}
+const packageBtn=document.createElement('button'); packageBtn.textContent='生成封闭交付包';
+packageBtn.onclick=async()=>{
+  try{ const r=await api(`/api/v1/tasks/${currentTask}/package`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({version:'reviewed-build'})});
+    $('exportLog').textContent='交付包已校验完成：'; const a=document.createElement('a');a.href=r.url;a.target='_blank';a.textContent='打开交付包';$('exportLog').appendChild(a);
+  }catch(e){$('exportLog').textContent=e.message;}
+};
+$('btnLoad').parentElement.appendChild(packageBtn);
+const reopenBtn=document.createElement('button'); reopenBtn.textContent='继续修改审核';
+reopenBtn.onclick=async()=>{
+  try{await api(`/api/v1/tasks/${currentTask}/reopen-review`,{method:'POST'});await loadResults();$('exportLog').textContent='已重新打开审核；历史交付保留。';}
+  catch(e){$('exportLog').textContent=e.message;}
+};
+$('btnLoad').parentElement.appendChild(reopenBtn);
+const confirmBtn=document.createElement('button'); confirmBtn.textContent='确认审核完成';
+confirmBtn.onclick=async()=>{
+  try{ await api(`/api/v1/tasks/${currentTask}/confirm-review`,{method:'POST'}); await loadResults(); $('exportLog').textContent='审核已确认；分析完整性与自动成绩保持原记录。'; }
+  catch(e){ $('exportLog').textContent=e.message; }
+};
+$('btnLoad').parentElement.appendChild(confirmBtn);
+const reselectBtn=document.createElement('button'); reselectBtn.textContent='用当前配置新建重选任务';
+reselectBtn.onclick=async()=>{
+  try{ const r=await api(`/api/v1/tasks/${currentTask}/reselect`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({client_request_id:crypto.randomUUID()})}); location.href='/?task='+encodeURIComponent(r.task_id); }
+  catch(e){ $('exportLog').textContent=e.message; }
+};
+$('btnLoad').parentElement.appendChild(reselectBtn);
+$('btnLoad').onclick=loadResults;
+$('btnBatchExport').onclick=async()=>{
+  const reviewed=await api(`/api/v1/tasks/${currentTask}/results`);
+  const items=[...reviewed.final_recommended_photos.map(p=>({...p,kind:"photo"})),...reviewed.final_video_segments.map(s=>({...s,kind:"video"}))];
+  if(!items.length){ $('batchProgress').innerHTML='<span class="err">没有已保留的候选可批量导出</span>'; return; }
+  try{
+    const r=await api('/api/v1/export/batch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task_id:currentTask,items})});
+    $('batchProgress').textContent='已启动批量导出…';
+    pollBatch(r.export_job_id);
+  }catch(e){ $('batchProgress').innerHTML=`<span class="err">批量导出启动失败：${e.message}</span>`; }
+};
+$('btnManifest').onclick=async()=>{
+  const reviewed=await api(`/api/v1/tasks/${currentTask}/results`);
+  const items=[...reviewed.final_recommended_photos.map(p=>({...p,kind:"photo"})),...reviewed.final_video_segments.map(s=>({...s,kind:"video"}))];
+  if(!items.length){ $('exportLog').innerHTML='<span class="err">没有已保留的候选可导出清单</span>'; return; }
+  try{ const r=await api('/api/v1/export/manifest',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task_id:currentTask,items})});
+    $('exportLog').innerHTML=`<span class="ok">来源清单已导出：${r.file}</span> <a href="/api/v1/export/file/${r.file}" target="_blank">下载清单</a>`+(r.variant_files||[]).map(v=>` <a href="/api/v1/export/file/${v.file}" target="_blank">最佳帧开头版</a>`).join(''); }
+  catch(e){ $('exportLog').innerHTML=`<span class="err">清单导出失败：${e.message}</span>`; }
+};
+loadTasks().then(()=>{
+  // 从首页「进入审核与导出」跳转时，自动选中该任务；不在最近列表时按指定 task 直接获取
+  const preset = new URLSearchParams(location.search).get('task');
+  if (preset) {
+    const exists = [...$('taskSelect').options].some(o => o.value === preset);
+    if (!exists) {
+      const o = document.createElement('option'); o.value = preset; o.textContent = preset.slice(0, 18) + ' · 指定任务';
+      $('taskSelect').appendChild(o);
+    }
+    $('taskSelect').value = preset;
+    loadResults();
+  }
+});
+</script>
+</body>
+</html>

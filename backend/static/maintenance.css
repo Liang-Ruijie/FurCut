@@ -1,0 +1,67 @@
+/* Geometry only: retain the original white/gray pages, blue buttons and typography. */
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px max(16px,calc((100vw - 1068px)/2))}
+header a{margin-left:0}
+main{margin:20px auto}
+.card{padding:20px;margin-bottom:20px}
+.card h2{margin:0 0 12px}
+.card>.hint{margin:0 0 12px}
+.card.row,.card>.row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.col{min-width:0}
+.col>label:first-child{margin-top:0}
+label{margin:12px 0 6px}
+input[type=text],input[type=number],select,textarea{font:inherit;max-width:100%;min-width:0;margin:0;padding:8px 10px;vertical-align:middle}
+input[type=text],input[type=number],select{height:40px}
+textarea{display:block;min-height:100px}
+button{min-height:40px;padding:8px 14px;vertical-align:middle;margin:0}
+input[type=checkbox]{width:16px;height:16px;flex:none;margin:0;vertical-align:middle}
+.action-row{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:16px 0}
+.action-row:last-child{margin-bottom:0}
+.action-row button,.action-row select,.action-row label,.action-row a{margin:0!important}
+.action-row .hint,.action-row .muted{margin:0}
+.filelist{margin-top:12px}
+.filelist label{gap:10px;margin:0;padding:8px;align-items:center}
+.assets{gap:12px}
+.asset .rm{min-height:22px;height:22px;padding:0;line-height:20px}
+.preference-export-row{display:flex;align-items:center;gap:16px 24px;flex-wrap:wrap;margin-top:16px}
+.preference-export-row label{margin:0}
+.checkbox-label,.inline-field{display:flex;align-items:center;gap:8px}
+.inline-field{white-space:nowrap}
+.create-column{display:flex;flex-direction:column}
+.create-column>.action-row{margin-top:auto;margin-bottom:0;min-height:40px}
+#cfgInfo,#prefMsg,#taskHint{margin-top:8px}
+#prefMsg{margin-top:0}
+#taskdetail{margin-top:12px;overflow-wrap:anywhere;max-height:none}
+#taskSelect{margin-bottom:0}
+#loadMsg{display:block;margin-top:12px}
+.cand{margin:12px 0;padding:14px}
+.cand>.meta{margin-bottom:12px;overflow-wrap:anywhere}
+.cand img,.cand video{margin:0 0 12px}
+.cand>div:has(>button),.cand>div>div:has(>button){display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}
+.cand button{margin:0!important}
+.cand .binput{width:100px}
+#exportLog,#batchProgress{overflow-wrap:anywhere;margin-top:12px}
+.table-scroll{overflow-x:auto}
+.table-scroll table{min-width:600px}
+th,td{vertical-align:middle}
+@media(max-width:700px){
+ header h1{width:100%}
+ .card{padding:16px}
+ .card.row,.card>.row{grid-template-columns:minmax(0,1fr);gap:20px}
+ .create-column>.action-row{margin-top:0}
+ .preference-export-row{align-items:flex-start;flex-direction:column;gap:12px}
+ .checkbox-label{align-items:flex-start}
+ .checkbox-label input{margin-top:3px}
+}
+/* Export options read vertically; each numbered task step owns its own section. */
+.preference-export-row{display:flex;flex-direction:column;align-items:flex-start;gap:12px}
+#prefBestFrame:disabled{background:#f3f4f6;color:#9ca3af}
+#btnSavePref:disabled{background:#e5e7eb;color:#6b7280;cursor:not-allowed}
+/* Common outer grid, native control inset and readable diagnostic actions. */
+main{max-width:1100px;padding-inline:16px}
+select{padding-right:34px;appearance:none;background-color:#fff;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-size:16px}
+button{white-space:nowrap}
+header a{white-space:nowrap}
+.filelist label{overflow-wrap:anywhere}
+.table-scroll td,.table-scroll th{white-space:nowrap}
+.cand img,.cand video{display:block;max-width:100%}
+@media(forced-colors:active){select{appearance:auto;background-image:none}}
